@@ -1,3 +1,4 @@
+/* eslint-disable */
 <template>
  <div class="posts">
      <h1>Edit Posts</h1>

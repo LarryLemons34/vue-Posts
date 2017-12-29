@@ -2,17 +2,95 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const neo4j = require('neo4j-driver').v1;
+
 var mongoose = require('mongoose');
 
 var Post = require("../models/post");
 
 
 const app= express();
+console.log("Test log")
+const driver = neo4j.driver('bolt://localhost', neo4j.auth.basic('neo4j', 'password'));
+const session = driver.session();
+
+const personName = 'Alice';
+const resultPromise = session.run(
+    'MATCH (tom:Person {name:"Tom Hanks"})-[:ACTED_IN]->(m) return m'
+)
+
+resultPromise.then(result => {
+    //session.close();
+
+    
+    result.records.forEach(element => {
+        const node = element.get(0);
+        console.log(node.properties.id)        
+    });
+
+
+    //driver.close();
+})
 app.use(morgan('combinded'));
 app.use(bodyParser.json());
 app.use(cors());
 
-app.get('/posts', (req, res) => {
+app.get('/graphPosts/name/:name',(req, res) =>{
+    session.run(
+        'Match (p {name: "' +req.params.name + '"}) return p'
+    )
+    .then(result =>{
+        session.close();
+        result.records.forEach(element => {
+            const node = element.get(0);
+            console.log(node.properties.name)        
+        });
+        driver.close();
+        res.send({
+            posts: result.records[0]
+        })
+    }).catch(error => {
+        console.log(error);
+    })
+})
+
+app.get('/graphPosts',(req, res) =>{
+    session.run(
+        'Match (p:Post) return p'
+    )
+    .then(result =>{
+        session.close();
+        var posts = [];
+        result.records.forEach(element => {
+            const node = element.get(0);
+            posts.push(node.properties);
+            console.log(node.properties.title)        
+        });
+        res.send({
+            posts: posts
+        })
+    }).catch(error => {
+        console.log(error);
+    })
+})
+
+ app.post('/graphPosts',(req, res) =>{
+    session.run(
+         'Create (a:Post {title:$title, description: $description}) return a',
+         {title:  req.body.title, description: req.body.description}
+     )
+     .then(() =>{
+        res.send({
+           success: true,
+           message: 'Post saved successfully!'
+       })
+     })
+     .catch(error => {
+         console.log(error);
+     })
+ })
+ app.get('/posts', (req, res) => {
+  
   Post.find({}, 'title description', function (error, posts) {
     if (error) { console.error(error); }
     res.send({
@@ -84,7 +162,7 @@ app.delete('/posts/:id', (req, res) => {
     })
 
 })
-mongoose.connect('mongodb://localhost:27017/posts', { useMongoClient: true});
+//mongoose.connect('mongodb://localhost:27017/posts', { useMongoClient: true});
 
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "connetion error"));

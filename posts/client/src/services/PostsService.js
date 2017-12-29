@@ -4,6 +4,9 @@ export default {
   fetchPosts () {
     return Api().get('posts')
   },
+  fetchGraphPosts (){
+    return Api().get('graphPosts')
+  },
   addPost (params) {
     return Api().post('posts', params)
   },
@@ -15,6 +18,9 @@ export default {
   },
   deletePost (id){
     return Api().delete('posts/' + id)
+  },
+  addGraphPost (params){
+    return Api().post('graphPosts' + params)
   }
 
 }

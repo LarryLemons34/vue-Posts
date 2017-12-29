@@ -54,7 +54,8 @@ export default {
   },
   mounted () {
     console.log('mounted')
-    this.getPosts()
+    //this.getPosts()
+    this.getGraphPosts()
   },
   methods: {
     async getComputedPosts() {
@@ -64,6 +65,11 @@ export default {
     },
     async getPosts () {
       const response = await PostsService.fetchPosts()
+      this.posts = response.data.posts
+    },
+    async getGraphPosts () {
+      const response = await PostsService.fetchGraphPosts()
+      console.log(response.data.posts);
       this.posts = response.data.posts
     },
     async deletePost (id){
